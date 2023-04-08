@@ -15,7 +15,7 @@ use rand::seq::SliceRandom;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
-use crate::{Battlesnake, Board, Game};
+use crate::{Battlesnake, Board, Coord, Game};
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -98,27 +98,33 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     let my_body = &you.body;
 
     for coord in my_body {
-        if my_head.y == coord.y {
-            if my_head.x + 1 == coord.x {
-                // Part of body is to right of head, don't move right
+        if coord_is_right_of_head(my_head, coord) {
+            is_move_safe.insert("right", false);
+        } else if coord_is_left_of_head(my_head, coord) {
+            is_move_safe.insert("left", false);
+        } else if coord_is_above_head(my_head, coord) {
+            is_move_safe.insert("up", false);
+        } else if coord_is_below_head(my_head, coord) {
+            is_move_safe.insert("down", false);
+        }
+    }
+
+    // Prevent your Battlesnake from colliding with other Battlesnakes
+    let opponents = &board.snakes;
+
+    for opponent in opponents {
+        for coord in &opponent.body {
+            if coord_is_right_of_head(my_head, coord) {
                 is_move_safe.insert("right", false);
-            } else if my_head.x - 1 == coord.x {
-                // Part of body is to left of head, don't move left
+            } else if coord_is_left_of_head(my_head, coord) {
                 is_move_safe.insert("left", false);
-            }
-        } else if my_head.x == coord.x {
-            if my_head.y + 1 == coord.y {
-                // Part of body is above head, don't move up
+            } else if coord_is_above_head(my_head, coord) {
                 is_move_safe.insert("up", false);
-            } else if my_head.y - 1 == coord.y {
-                // Part of body is below head, don't move down
+            } else if coord_is_below_head(my_head, coord) {
                 is_move_safe.insert("down", false);
             }
         }
     }
-
-    // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-    // let opponents = &board.snakes;
 
     // Are there any safe moves left?
     let safe_moves = is_move_safe
@@ -135,4 +141,20 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
 
     info!("MOVE {}: {}", turn, chosen);
     return json!({ "move": chosen });
+}
+
+pub fn coord_is_right_of_head(my_head: &Coord, coord: &Coord) -> bool {
+    return my_head.x + 1 == coord.x && my_head.y == coord.y;
+}
+
+pub fn coord_is_left_of_head(my_head: &Coord, coord: &Coord) -> bool {
+    return my_head.x - 1 == coord.x && my_head.y == coord.y;
+}
+
+pub fn coord_is_above_head(my_head: &Coord, coord: &Coord) -> bool {
+    return my_head.y + 1 == coord.y && my_head.x == coord.x;
+}
+
+pub fn coord_is_below_head(my_head: &Coord, coord: &Coord) -> bool {
+    return my_head.y - 1 == coord.y && my_head.x == coord.x;
 }
