@@ -9,6 +9,7 @@ processes = []
 
 [experimental]
   auto_rollback = true
+  cmd = "./battle-snake-rust"
 
 [[services]]
   http_checks = []
