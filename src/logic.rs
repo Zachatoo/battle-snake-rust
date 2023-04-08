@@ -26,9 +26,10 @@ pub fn info() -> Value {
     return json!({
         "apiversion": "1",
         "author": "Zachatoo",
-        "color": "#9a86fd",
-        "head": "default",
-        "tail": "default",
+        "color": "#00AA33",
+        "head": "gamer",
+        "tail": "round-bum
+        ",
     });
 }
 
