@@ -119,7 +119,13 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
         .collect::<Vec<_>>();
 
     // Choose a random move from the safe ones
-    let chosen = safe_moves.choose(&mut rand::thread_rng()).unwrap();
+    let chosen = match safe_moves.choose(&mut rand::thread_rng()) {
+        Some(res) => res,
+        None => {
+            info!("No safe moves found");
+            "up"
+        }
+    };
 
     // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
     // let food = &board.food;
@@ -151,7 +157,11 @@ pub fn coord_is_right_of_head(my_head: &Coord, coord: &Coord) -> bool {
 }
 
 pub fn coord_is_left_of_head(my_head: &Coord, coord: &Coord) -> bool {
-    return my_head.x - 1 == coord.x && my_head.y == coord.y;
+    let safe_head_left_x = match my_head.x {
+        0 => my_head.x,
+        _ => my_head.x - 1,
+    };
+    return safe_head_left_x == coord.x && my_head.y == coord.y;
 }
 
 pub fn coord_is_above_head(my_head: &Coord, coord: &Coord) -> bool {
@@ -159,13 +169,25 @@ pub fn coord_is_above_head(my_head: &Coord, coord: &Coord) -> bool {
 }
 
 pub fn coord_is_below_head(my_head: &Coord, coord: &Coord) -> bool {
-    return my_head.y - 1 == coord.y && my_head.x == coord.x;
+    let safe_head_down_y = match my_head.y {
+        0 => my_head.y,
+        _ => my_head.y - 1,
+    };
+    return safe_head_down_y == coord.y && my_head.x == coord.x;
 }
 
 pub fn get_adjacent_coords(coord: &Coord) -> Vec<Coord> {
+    let safe_left_x = match coord.x {
+        0 => coord.x,
+        _ => coord.x - 1,
+    };
+    let safe_down_y = match coord.y {
+        0 => coord.y,
+        _ => coord.y - 1,
+    };
     return vec![
         Coord {
-            x: coord.x - 1,
+            x: safe_left_x,
             y: coord.y,
         },
         Coord {
@@ -174,7 +196,7 @@ pub fn get_adjacent_coords(coord: &Coord) -> Vec<Coord> {
         },
         Coord {
             x: coord.x,
-            y: coord.y - 1,
+            y: safe_down_y,
         },
         Coord {
             x: coord.x,
