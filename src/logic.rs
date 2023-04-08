@@ -95,35 +95,20 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     }
 
     // Prevent your Battlesnake from colliding with itself
-    let my_body = &you.body;
-
-    for coord in my_body {
-        if coord_is_right_of_head(my_head, coord) {
-            is_move_safe.insert("right", false);
-        } else if coord_is_left_of_head(my_head, coord) {
-            is_move_safe.insert("left", false);
-        } else if coord_is_above_head(my_head, coord) {
-            is_move_safe.insert("up", false);
-        } else if coord_is_below_head(my_head, coord) {
-            is_move_safe.insert("down", false);
-        }
-    }
+    set_unsafe_moves_given_head_and_unsafe_coords(&mut is_move_safe, my_head, &you.body);
 
     // Prevent your Battlesnake from colliding with other Battlesnakes
     let opponents = &board.snakes;
 
     for opponent in opponents {
-        for coord in &opponent.body {
-            if coord_is_right_of_head(my_head, coord) {
-                is_move_safe.insert("right", false);
-            } else if coord_is_left_of_head(my_head, coord) {
-                is_move_safe.insert("left", false);
-            } else if coord_is_above_head(my_head, coord) {
-                is_move_safe.insert("up", false);
-            } else if coord_is_below_head(my_head, coord) {
-                is_move_safe.insert("down", false);
-            }
-        }
+        let coords_near_opponent_head = get_adjacent_coords(&opponent.head);
+        set_unsafe_moves_given_head_and_unsafe_coords(
+            &mut is_move_safe,
+            my_head,
+            &coords_near_opponent_head,
+        );
+
+        set_unsafe_moves_given_head_and_unsafe_coords(&mut is_move_safe, my_head, &opponent.body);
     }
 
     // Are there any safe moves left?
@@ -143,6 +128,24 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     return json!({ "move": chosen });
 }
 
+pub fn set_unsafe_moves_given_head_and_unsafe_coords(
+    is_move_safe: &mut HashMap<&str, bool>,
+    my_head: &Coord,
+    unsafe_coords: &Vec<Coord>,
+) {
+    for coord in unsafe_coords {
+        if coord_is_right_of_head(my_head, coord) {
+            is_move_safe.insert("right", false);
+        } else if coord_is_left_of_head(my_head, coord) {
+            is_move_safe.insert("left", false);
+        } else if coord_is_above_head(my_head, coord) {
+            is_move_safe.insert("up", false);
+        } else if coord_is_below_head(my_head, coord) {
+            is_move_safe.insert("down", false);
+        }
+    }
+}
+
 pub fn coord_is_right_of_head(my_head: &Coord, coord: &Coord) -> bool {
     return my_head.x + 1 == coord.x && my_head.y == coord.y;
 }
@@ -157,4 +160,25 @@ pub fn coord_is_above_head(my_head: &Coord, coord: &Coord) -> bool {
 
 pub fn coord_is_below_head(my_head: &Coord, coord: &Coord) -> bool {
     return my_head.y - 1 == coord.y && my_head.x == coord.x;
+}
+
+pub fn get_adjacent_coords(coord: &Coord) -> Vec<Coord> {
+    return vec![
+        Coord {
+            x: coord.x - 1,
+            y: coord.y,
+        },
+        Coord {
+            x: coord.x + 1,
+            y: coord.y,
+        },
+        Coord {
+            x: coord.x,
+            y: coord.y - 1,
+        },
+        Coord {
+            x: coord.x,
+            y: coord.y + 1,
+        },
+    ];
 }
