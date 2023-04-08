@@ -15,10 +15,10 @@ cargo run
 You should see the following output once it is running
 
 ```sh
-🚀 Rocket has launched from http://0.0.0.0:8080
+🚀 Rocket has launched from http://0.0.0.0:8000
 ```
 
-Open [localhost:8080](http://localhost:8080) in your browser and you should see
+Open [localhost:8000](http://localhost:8000) in your browser and you should see
 
 ```json
 {
@@ -40,7 +40,7 @@ Install the [Battlesnake CLI](https://github.com/BattlesnakeOfficial/rules/tree/
 Command to run a local game
 
 ```sh
-battlesnake play -W 11 -H 11 --name 'Rust Starter Project' --url http://localhost:8080 -g solo --browser
+battlesnake play -W 11 -H 11 --name 'Rust Starter Project' --url http://localhost:8000 -g solo --browser
 ```
 
 ## Next Steps
