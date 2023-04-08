@@ -94,8 +94,28 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
         is_move_safe.insert("down", false);
     }
 
-    // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-    // let my_body = &you.body;
+    // Prevent your Battlesnake from colliding with itself
+    let my_body = &you.body;
+
+    for coord in my_body {
+        if my_head.y == coord.y {
+            if my_head.x + 1 == coord.x {
+                // Part of body is to right of head, don't move right
+                is_move_safe.insert("right", false);
+            } else if my_head.x - 1 == coord.x {
+                // Part of body is to left of head, don't move left
+                is_move_safe.insert("left", false);
+            }
+        } else if my_head.x == coord.x {
+            if my_head.y + 1 == coord.y {
+                // Part of body is above head, don't move up
+                is_move_safe.insert("up", false);
+            } else if my_head.y - 1 == coord.y {
+                // Part of body is below head, don't move down
+                is_move_safe.insert("down", false);
+            }
+        }
+    }
 
     // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
     // let opponents = &board.snakes;
