@@ -28,8 +28,7 @@ pub fn info() -> Value {
         "author": "Zachatoo",
         "color": "#00AA33",
         "head": "gamer",
-        "tail": "round-bum
-        ",
+        "tail": "round-bum",
     });
 }
 
