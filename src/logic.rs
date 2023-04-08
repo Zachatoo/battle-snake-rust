@@ -45,7 +45,7 @@ pub fn end(_game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
 // move is called on every turn and returns your next move
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
-pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> Value {
+pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> Value {
     let mut is_move_safe: HashMap<_, _> = vec![
         ("up", true),
         ("down", true),
@@ -55,7 +55,7 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
     .into_iter()
     .collect();
 
-    // We've included code to prevent your Battlesnake from moving backwards
+    // Prevent your Battlesnake from moving backwards
     let my_head = &you.body[0]; // Coordinates of your head
     let my_neck = &you.body[1]; // Coordinates of your "neck"
 
@@ -73,9 +73,26 @@ pub fn get_move(_game: &Game, turn: &u32, _board: &Board, you: &Battlesnake) -> 
         is_move_safe.insert("up", false);
     }
 
-    // TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
-    // let board_width = &board.width;
-    // let board_height = &board.height;
+    // Prevent your Battlesnake from moving out of bounds
+    let board_width = &board.width;
+    let board_height = &board.height;
+
+    if my_head.x == board_width - 1 {
+        // Head is on far right side of board, don't move right
+        is_move_safe.insert("right", false);
+    }
+    if my_head.x == 0 {
+        // Head is on far left side of board, don't move left
+        is_move_safe.insert("left", false);
+    }
+    if my_head.y == board_height - 1 {
+        // Head is on top of board, don't move up
+        is_move_safe.insert("up", false);
+    }
+    if my_head.y == 0 {
+        // Head is on bottom of board, don't move down
+        is_move_safe.insert("down", false);
+    }
 
     // TODO: Step 2 - Prevent your Battlesnake from colliding with itself
     // let my_body = &you.body;
