@@ -5,4 +5,4 @@ WORKDIR /usr/app
 
 RUN cargo install --path .
 
-CMD ["starter-snake-rust"]
+CMD ["battle-snake-rust"]
