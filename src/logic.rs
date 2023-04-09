@@ -101,7 +101,12 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     set_unsafe_moves_given_head_and_unsafe_coords(&mut is_move_safe, my_head, &you.body);
 
     // Prevent your Battlesnake from colliding with other Battlesnakes
-    let opponents = &board.snakes;
+    let opponents = board
+        .snakes
+        .clone()
+        .into_iter()
+        .filter(|snake| snake.id != you.id)
+        .collect::<Vec<_>>();
 
     for opponent in opponents {
         let coords_near_opponent_head = get_adjacent_coords(&opponent.head);
