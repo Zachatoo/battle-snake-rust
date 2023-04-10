@@ -129,18 +129,20 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     let my_head_node = Node {
         coord: my_head.to_owned(),
         origin_direction: Direction::None,
-        path: Vec::new(),
     };
     let mut closest_food_node: Option<Node> = None;
 
     let mut frontier = VecDeque::<Node>::new();
-    frontier.push_back(my_head_node.to_owned());
-
     let mut visited_nodes: HashMap<_, _> =
         vec![(my_head_node.to_owned(), false)].into_iter().collect();
 
+    for adjacent_node in get_adjacent_nodes(my_head_node, board.width, board.height) {
+        frontier.push_back(adjacent_node.to_owned());
+        visited_nodes.insert(adjacent_node, true);
+    }
+
     while !frontier.is_empty() {
-        let current = &frontier.pop_front().unwrap();
+        let current = frontier.pop_front().unwrap();
         let coord = &current.coord;
 
         if board.food.contains(coord) {
@@ -152,13 +154,13 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
         for adjacent_node in get_adjacent_nodes(current, board.width, board.height) {
             if !visited_nodes.contains_key(&adjacent_node) {
                 frontier.push_back(adjacent_node.to_owned());
-                visited_nodes.insert(adjacent_node.to_owned(), true);
+                visited_nodes.insert(adjacent_node, true);
             }
         }
     }
 
     let first_food_direction = match closest_food_node {
-        Some(node) => node.path[0].origin_direction,
+        Some(node) => node.origin_direction,
         _ => Direction::None,
     };
     info!("First direction {}", first_food_direction.as_str());
@@ -193,7 +195,7 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     return json!({ "move": chosen });
 }
 
-pub fn set_unsafe_moves_given_head_and_unsafe_coords(
+fn set_unsafe_moves_given_head_and_unsafe_coords(
     is_move_safe: &mut HashMap<&str, bool>,
     my_head: &Coord,
     unsafe_coords: &Vec<Coord>,
@@ -227,11 +229,11 @@ pub fn set_unsafe_moves_given_head_and_unsafe_coords(
     }
 }
 
-pub fn coord_is_right_of_head(my_head: &Coord, coord: &Coord) -> bool {
+fn coord_is_right_of_head(my_head: &Coord, coord: &Coord) -> bool {
     return my_head.x + 1 == coord.x && my_head.y == coord.y;
 }
 
-pub fn coord_is_left_of_head(my_head: &Coord, coord: &Coord) -> bool {
+fn coord_is_left_of_head(my_head: &Coord, coord: &Coord) -> bool {
     let safe_head_left_x = match my_head.x {
         0 => my_head.x,
         _ => my_head.x - 1,
@@ -239,11 +241,11 @@ pub fn coord_is_left_of_head(my_head: &Coord, coord: &Coord) -> bool {
     return safe_head_left_x == coord.x && my_head.y == coord.y;
 }
 
-pub fn coord_is_above_head(my_head: &Coord, coord: &Coord) -> bool {
+fn coord_is_above_head(my_head: &Coord, coord: &Coord) -> bool {
     return my_head.y + 1 == coord.y && my_head.x == coord.x;
 }
 
-pub fn coord_is_below_head(my_head: &Coord, coord: &Coord) -> bool {
+fn coord_is_below_head(my_head: &Coord, coord: &Coord) -> bool {
     let safe_head_down_y = match my_head.y {
         0 => my_head.y,
         _ => my_head.y - 1,
@@ -251,7 +253,7 @@ pub fn coord_is_below_head(my_head: &Coord, coord: &Coord) -> bool {
     return safe_head_down_y == coord.y && my_head.x == coord.x;
 }
 
-pub fn get_adjacent_coords(coord: &Coord, width: u32, height: u32) -> Vec<Coord> {
+fn get_adjacent_coords(coord: &Coord, width: u32, height: u32) -> Vec<Coord> {
     let mut coords: Vec<Coord> = vec![];
     if coord.x > 0 {
         coords.push(Coord {
@@ -280,7 +282,7 @@ pub fn get_adjacent_coords(coord: &Coord, width: u32, height: u32) -> Vec<Coord>
     return coords;
 }
 
-pub fn get_adjacent_nodes(node: &Node, width: u32, height: u32) -> Vec<Node> {
+fn get_adjacent_nodes(node: Node, width: u32, height: u32) -> Vec<Node> {
     let mut nodes: Vec<Node> = vec![];
     let coord = &node.coord;
     if coord.x > 0 {
@@ -288,12 +290,13 @@ pub fn get_adjacent_nodes(node: &Node, width: u32, height: u32) -> Vec<Node> {
             x: coord.x - 1,
             y: coord.y,
         };
-        let mut right_node = Node {
+        let right_node = Node {
             coord,
-            origin_direction: Direction::Right,
-            path: node.path.to_owned(),
+            origin_direction: match node.origin_direction {
+                Direction::None => Direction::Right,
+                _ => node.origin_direction,
+            },
         };
-        right_node.path.push(right_node.to_owned());
         nodes.push(right_node);
     }
     if coord.y > 0 {
@@ -301,12 +304,13 @@ pub fn get_adjacent_nodes(node: &Node, width: u32, height: u32) -> Vec<Node> {
             x: coord.x,
             y: coord.y - 1,
         };
-        let mut up_node = Node {
+        let up_node = Node {
             coord,
-            origin_direction: Direction::Up,
-            path: node.path.to_owned(),
+            origin_direction: match node.origin_direction {
+                Direction::None => Direction::Up,
+                _ => node.origin_direction,
+            },
         };
-        up_node.path.push(up_node.to_owned());
         nodes.push(up_node);
     }
     if coord.x < width - 1 {
@@ -314,12 +318,13 @@ pub fn get_adjacent_nodes(node: &Node, width: u32, height: u32) -> Vec<Node> {
             x: coord.x + 1,
             y: coord.y,
         };
-        let mut left_node = Node {
+        let left_node = Node {
             coord,
-            origin_direction: Direction::Left,
-            path: node.path.to_owned(),
+            origin_direction: match node.origin_direction {
+                Direction::None => Direction::Left,
+                _ => node.origin_direction,
+            },
         };
-        left_node.path.push(left_node.to_owned());
         nodes.push(left_node);
     }
     if coord.y < height - 1 {
@@ -327,12 +332,13 @@ pub fn get_adjacent_nodes(node: &Node, width: u32, height: u32) -> Vec<Node> {
             x: coord.x,
             y: coord.y + 1,
         };
-        let mut down_node = Node {
+        let down_node = Node {
             coord,
-            origin_direction: Direction::Down,
-            path: node.path.to_owned(),
+            origin_direction: match node.origin_direction {
+                Direction::None => Direction::Down,
+                _ => node.origin_direction,
+            },
         };
-        down_node.path.push(down_node.to_owned());
         nodes.push(down_node);
     }
     return nodes;

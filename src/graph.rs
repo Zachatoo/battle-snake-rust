@@ -4,7 +4,6 @@ use crate::Coord;
 pub struct Node {
     pub coord: Coord,
     pub origin_direction: Direction,
-    pub path: Vec<Node>,
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
