@@ -159,11 +159,11 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
         }
     }
 
-    let first_food_direction = match closest_food_node {
+    let closest_food_direction = match closest_food_node {
         Some(node) => node.origin_direction,
         _ => Direction::None,
     };
-    info!("First direction {}", first_food_direction.as_str());
+    info!("Closest food direction {}", closest_food_direction.as_str());
 
     // Are there any safe moves left?
     let safe_moves = is_move_safe
@@ -172,13 +172,15 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
         .map(|(k, _)| k)
         .collect::<Vec<_>>();
 
+    info!("Safe moves: {:?}", safe_moves);
+
     if safe_moves
         .iter()
-        .any(|v| v == &first_food_direction.as_str())
+        .any(|v| v == &closest_food_direction.as_str())
     {
         info!("Moving towards food");
-        info!("MOVE {}: {}", turn, first_food_direction.as_str());
-        return json!({ "move": first_food_direction.as_str() });
+        info!("MOVE {}: {}", turn, closest_food_direction.as_str());
+        return json!({ "move": closest_food_direction.as_str() });
     }
 
     // Choose a random move from the safe ones
