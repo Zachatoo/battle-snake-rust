@@ -10,6 +10,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 
+mod graph;
 mod logic;
 
 // API and Response Objects
@@ -43,7 +44,7 @@ pub struct Battlesnake {
     shout: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Coord {
     x: u32,
     y: u32,
@@ -115,7 +116,7 @@ fn rocket() -> _ {
     rocket::build()
         .attach(AdHoc::on_response("Server ID Middleware", |_, res| {
             Box::pin(async move {
-                res.set_raw_header("Server", "battlesnake/github/battle-snake-rust");
+                res.set_raw_header("Server", "zachatoo/battle-snake-rust");
             })
         }))
         .mount(
