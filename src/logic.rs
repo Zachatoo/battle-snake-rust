@@ -112,14 +112,18 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
         .collect::<Vec<_>>();
 
     for opponent in opponents {
-        let coords_near_opponent_head =
-            get_adjacent_coords(&opponent.head, board.width, board.height);
-        info!("Prevent your Battlesnake from colliding with other Battlesnakes head on next turn");
-        set_unsafe_moves_given_head_and_unsafe_coords(
-            &mut is_move_safe,
-            my_head,
-            &coords_near_opponent_head,
-        );
+        if opponent.length >= you.length {
+            let coords_near_opponent_head =
+                get_adjacent_coords(&opponent.head, board.width, board.height);
+            info!(
+                "Prevent your Battlesnake from colliding with other Battlesnakes head on next turn"
+            );
+            set_unsafe_moves_given_head_and_unsafe_coords(
+                &mut is_move_safe,
+                my_head,
+                &coords_near_opponent_head,
+            );
+        }
 
         info!("Prevent your Battlesnake from colliding with other Battlesnakes body");
         set_unsafe_moves_given_head_and_unsafe_coords(&mut is_move_safe, my_head, &opponent.body);
