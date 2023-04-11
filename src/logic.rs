@@ -101,7 +101,7 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
 
     // Prevent your Battlesnake from colliding with itself
     info!("Prevent your Battlesnake fron colliding with itself");
-    set_unsafe_moves_given_head_and_unsafe_coords(&mut is_move_safe, my_head, &you.body);
+    set_is_move_safe_given_head_and_coords(&mut is_move_safe, false, my_head, &you.body);
 
     // Prevent your Battlesnake from colliding with other Battlesnakes
     let opponents = board
@@ -118,15 +118,25 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
             info!(
                 "Prevent your Battlesnake from colliding with other Battlesnakes head on next turn"
             );
-            set_unsafe_moves_given_head_and_unsafe_coords(
+            set_is_move_safe_given_head_and_coords(
                 &mut is_move_safe,
+                false,
                 my_head,
                 &coords_near_opponent_head,
             );
         }
 
         info!("Prevent your Battlesnake from colliding with other Battlesnakes body");
-        set_unsafe_moves_given_head_and_unsafe_coords(&mut is_move_safe, my_head, &opponent.body);
+        set_is_move_safe_given_head_and_coords(&mut is_move_safe, false, my_head, &opponent.body);
+
+        if opponent.length < you.length {
+            set_is_move_safe_given_head_and_coords(
+                &mut is_move_safe,
+                true,
+                my_head,
+                &vec![opponent.head],
+            );
+        }
     }
 
     // Move towards food instead of random, to regain health and survive longer
@@ -201,8 +211,9 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     return json!({ "move": chosen });
 }
 
-fn set_unsafe_moves_given_head_and_unsafe_coords(
+fn set_is_move_safe_given_head_and_coords(
     is_move_safe: &mut HashMap<&str, bool>,
+    is_safe: bool,
     my_head: &Coord,
     unsafe_coords: &Vec<Coord>,
 ) {
@@ -212,25 +223,25 @@ fn set_unsafe_moves_given_head_and_unsafe_coords(
                 "Right is unsafe. my_head x {} y {}, coord x {} y {}",
                 my_head.x, my_head.y, coord.x, coord.y
             );
-            is_move_safe.insert("right", false);
+            is_move_safe.insert("right", is_safe);
         } else if coord_is_left_of_head(my_head, coord) {
             info!(
                 "Left is unsafe. my_head x {} y {}, coord x {} y {}",
                 my_head.x, my_head.y, coord.x, coord.y
             );
-            is_move_safe.insert("left", false);
+            is_move_safe.insert("left", is_safe);
         } else if coord_is_above_head(my_head, coord) {
             info!(
                 "Up is unsafe. my_head x {} y {}, coord x {} y {}",
                 my_head.x, my_head.y, coord.x, coord.y
             );
-            is_move_safe.insert("up", false);
+            is_move_safe.insert("up", is_safe);
         } else if coord_is_below_head(my_head, coord) {
             info!(
                 "Down is unsafe. my_head x {} y {}, coord x {} y {}",
                 my_head.x, my_head.y, coord.x, coord.y
             );
-            is_move_safe.insert("down", false);
+            is_move_safe.insert("down", is_safe);
         }
     }
 }
