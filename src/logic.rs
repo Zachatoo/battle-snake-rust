@@ -292,34 +292,6 @@ fn get_adjacent_nodes(node: Node, width: u32, height: u32) -> Vec<Node> {
             x: coord.x - 1,
             y: coord.y,
         };
-        let right_node = Node {
-            coord,
-            origin_direction: match node.origin_direction {
-                Direction::None => Direction::Right,
-                _ => node.origin_direction,
-            },
-        };
-        nodes.push(right_node);
-    }
-    if coord.y > 0 {
-        let coord = Coord {
-            x: coord.x,
-            y: coord.y - 1,
-        };
-        let up_node = Node {
-            coord,
-            origin_direction: match node.origin_direction {
-                Direction::None => Direction::Up,
-                _ => node.origin_direction,
-            },
-        };
-        nodes.push(up_node);
-    }
-    if coord.x < width - 1 {
-        let coord = Coord {
-            x: coord.x + 1,
-            y: coord.y,
-        };
         let left_node = Node {
             coord,
             origin_direction: match node.origin_direction {
@@ -329,10 +301,10 @@ fn get_adjacent_nodes(node: Node, width: u32, height: u32) -> Vec<Node> {
         };
         nodes.push(left_node);
     }
-    if coord.y < height - 1 {
+    if coord.y > 0 {
         let coord = Coord {
             x: coord.x,
-            y: coord.y + 1,
+            y: coord.y - 1,
         };
         let down_node = Node {
             coord,
@@ -342,6 +314,34 @@ fn get_adjacent_nodes(node: Node, width: u32, height: u32) -> Vec<Node> {
             },
         };
         nodes.push(down_node);
+    }
+    if coord.x < width - 1 {
+        let coord = Coord {
+            x: coord.x + 1,
+            y: coord.y,
+        };
+        let right_node = Node {
+            coord,
+            origin_direction: match node.origin_direction {
+                Direction::None => Direction::Right,
+                _ => node.origin_direction,
+            },
+        };
+        nodes.push(right_node);
+    }
+    if coord.y < height - 1 {
+        let coord = Coord {
+            x: coord.x,
+            y: coord.y + 1,
+        };
+        let up_node = Node {
+            coord,
+            origin_direction: match node.origin_direction {
+                Direction::None => Direction::Up,
+                _ => node.origin_direction,
+            },
+        };
+        nodes.push(up_node);
     }
     return nodes;
 }
