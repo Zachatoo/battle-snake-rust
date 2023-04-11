@@ -10,6 +10,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 
+mod auth;
 mod graph;
 mod logic;
 
@@ -58,13 +59,15 @@ pub struct GameState {
     you: Battlesnake,
 }
 
+// Endpoints
+
 #[get("/")]
-fn handle_index() -> Json<Value> {
+fn handle_index(_key: auth::ApiKey<'_>) -> Json<Value> {
     Json(logic::info())
 }
 
 #[post("/start", format = "json", data = "<start_req>")]
-fn handle_start(start_req: Json<GameState>) -> Status {
+fn handle_start(start_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
     logic::start(
         &start_req.game,
         &start_req.turn,
@@ -76,7 +79,7 @@ fn handle_start(start_req: Json<GameState>) -> Status {
 }
 
 #[post("/move", format = "json", data = "<move_req>")]
-fn handle_move(move_req: Json<GameState>) -> Json<Value> {
+fn handle_move(move_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Json<Value> {
     let response = logic::get_move(
         &move_req.game,
         &move_req.turn,
@@ -88,7 +91,7 @@ fn handle_move(move_req: Json<GameState>) -> Json<Value> {
 }
 
 #[post("/end", format = "json", data = "<end_req>")]
-fn handle_end(end_req: Json<GameState>) -> Status {
+fn handle_end(end_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
     logic::end(&end_req.game, &end_req.turn, &end_req.board, &end_req.you);
 
     Status::Ok
