@@ -4,62 +4,17 @@ extern crate rocket;
 use log::info;
 use rocket::fairing::AdHoc;
 use rocket::http::Status;
-use rocket::serde::{json::Json, Deserialize};
-use serde::Serialize;
+use rocket::serde::json::Json;
 use serde_json::Value;
-use std::collections::HashMap;
 use std::env;
+
+use crate::request::GameState;
 
 mod auth;
 mod graph;
 mod logic;
-
-// API and Response Objects
-// See https://docs.battlesnake.com/api
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct Game {
-    id: String,
-    ruleset: HashMap<String, Value>,
-    timeout: u32,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct Board {
-    height: u32,
-    width: u32,
-    food: Vec<Coord>,
-    snakes: Vec<Battlesnake>,
-    hazards: Vec<Coord>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Battlesnake {
-    id: String,
-    name: String,
-    health: u32,
-    body: Vec<Coord>,
-    head: Coord,
-    length: u32,
-    latency: String,
-    shout: Option<String>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Coord {
-    x: u32,
-    y: u32,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct GameState {
-    game: Game,
-    turn: u32,
-    board: Board,
-    you: Battlesnake,
-}
-
-// Endpoints
+mod movement_set;
+mod request;
 
 #[get("/")]
 fn handle_index(_key: auth::ApiKey<'_>) -> Json<Value> {
