@@ -24,8 +24,8 @@ pub struct Board {
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Coord {
-    pub x: u32,
-    pub y: u32,
+    pub x: i32,
+    pub y: i32,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

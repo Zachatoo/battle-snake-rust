@@ -45,7 +45,11 @@ fn avoid_bounds(width: u32, height: u32, you: &Battlesnake, set: &mut WeightedMo
     let my_head = &you.head;
     let adjacent_nodes = get_adjacent_nodes(my_head);
     for node in &adjacent_nodes {
-        if node.coord.x >= width || node.coord.y >= height {
+        if node.coord.x < 0
+            || node.coord.x >= (width as i32)
+            || node.coord.y < 0
+            || node.coord.y >= (height as i32)
+        {
             set.remove(&node.movement);
         }
     }
@@ -110,7 +114,7 @@ fn snake_is_stacked(snake: &Battlesnake) -> bool {
 }
 
 fn get_adjacent_nodes(coord: &Coord) -> Vec<Node> {
-    let mut nodes: Vec<Node> = vec![
+    vec![
         Node {
             coord: Coord {
                 x: coord.x,
@@ -120,29 +124,24 @@ fn get_adjacent_nodes(coord: &Coord) -> Vec<Node> {
         },
         Node {
             coord: Coord {
-                x: coord.x + 1,
-                y: coord.y,
+                x: coord.x,
+                y: coord.y - 1,
             },
-            movement: Movement::Right,
+            movement: Movement::Down,
         },
-    ];
-    if coord.x > 0 {
-        nodes.push(Node {
+        Node {
             coord: Coord {
                 x: coord.x - 1,
                 y: coord.y,
             },
             movement: Movement::Left,
-        });
-    }
-    if coord.y > 0 {
-        nodes.push(Node {
+        },
+        Node {
             coord: Coord {
-                x: coord.x,
-                y: coord.y - 1,
+                x: coord.x + 1,
+                y: coord.y,
             },
-            movement: Movement::Down,
-        });
-    }
-    nodes
+            movement: Movement::Right,
+        },
+    ]
 }
