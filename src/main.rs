@@ -70,7 +70,10 @@ fn rocket() -> _ {
         env::set_var("RUST_LOG", "info");
     }
 
-    env_logger::init();
+    match env_logger::try_init() {
+        Ok(_) => (),
+        Err(_) => (),
+    }
 
     info!("Starting Battlesnake Server...");
 
