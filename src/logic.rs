@@ -5,6 +5,7 @@ use crate::{
     graph::Node,
     movement_set::{Movement, WeightedMovementSet},
     request::{Battlesnake, Board, Coord, Game},
+    response::MoveResponse,
 };
 
 pub fn info() -> Value {
@@ -35,9 +36,9 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     handle_opponent_heads(&board.snakes, you, &mut movement_set);
 
     info!("Safe moves: {:?}", movement_set.moves);
-    let chosen_move = movement_set.pick_movement().as_str();
+    let chosen_move = movement_set.pick_movement().as_str().to_string();
     info!("MOVE {}: {}", turn, chosen_move);
-    return json!({ "move": chosen_move });
+    return json!(MoveResponse { chosen_move });
 }
 
 fn avoid_bounds(width: u32, height: u32, you: &Battlesnake, set: &mut WeightedMovementSet) {

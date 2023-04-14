@@ -15,6 +15,9 @@ mod graph;
 mod logic;
 mod movement_set;
 mod request;
+mod response;
+#[cfg(test)]
+mod tests;
 
 #[get("/")]
 fn handle_index(_key: auth::ApiKey<'_>) -> Json<Value> {
