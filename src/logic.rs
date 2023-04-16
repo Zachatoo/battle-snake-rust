@@ -34,9 +34,9 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
 
     avoid_bounds(board.width, board.height, you, &mut movement_set);
     avoid_snake_bodies(&board.snakes, you, &mut movement_set);
-    avoid_hazards(&board.hazards, you, &mut movement_set);
     scan_food(&board, you, &mut movement_set);
     handle_opponent_heads(&board.snakes, you, &mut movement_set);
+    avoid_hazards(&board.hazards, you, &mut movement_set);
 
     info!("Safe moves: {:?}", movement_set.moves);
     let chosen_move = movement_set.pick_movement().as_str().to_string();
