@@ -34,6 +34,7 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
 
     avoid_bounds(board.width, board.height, you, &mut movement_set);
     avoid_snake_bodies(&board.snakes, you, &mut movement_set);
+    avoid_hazards(&board.hazards, you, &mut movement_set);
     scan_food(&board, you, &mut movement_set);
     handle_opponent_heads(&board.snakes, you, &mut movement_set);
 
@@ -81,6 +82,23 @@ fn avoid_snake_bodies(snakes: &Vec<Battlesnake>, you: &Battlesnake, set: &mut We
     }
 }
 
+fn avoid_hazards(hazards: &Vec<Coord>, you: &Battlesnake, set: &mut WeightedMovementSet) {
+    if hazards.len() == 0 {
+        return;
+    }
+
+    info!("Avoiding hazards");
+    let my_head = &you.head;
+    let adjacent_nodes = get_adjacent_nodes(my_head);
+    for adjacent_node in adjacent_nodes {
+        for hazard in hazards {
+            if hazard.x == adjacent_node.coord.x && hazard.y == adjacent_node.coord.y {
+                set.change_probability(&adjacent_node.movement, 30);
+            }
+        }
+    }
+}
+
 fn handle_opponent_heads(
     snakes: &Vec<Battlesnake>,
     you: &Battlesnake,
@@ -112,6 +130,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     if board.food.len() == 0 {
         return;
     }
+    info!("Searching for food");
 
     let my_head = you.head.to_owned();
     let snake_coords = get_all_snake_coords(&board.snakes);
