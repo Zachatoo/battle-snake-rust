@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::cmp::max;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
@@ -79,10 +80,10 @@ impl WeightedMovementSet {
 
     pub fn remove(&mut self, movement: &Movement) {
         self.moves.remove(movement);
-        info!("Marked {} as unsafe", movement.as_str());
+        info!("Set {} as unsafe", movement.as_str());
     }
 
-    pub fn change_probability(&mut self, movement: &Movement, new_probability: usize) {
+    pub fn set_probability(&mut self, movement: &Movement, new_probability: usize) {
         match self.moves.get(movement) {
             Some(_) => {
                 self.moves.replace(WeightedMovement {
@@ -90,16 +91,33 @@ impl WeightedMovementSet {
                     probability_of_success: new_probability,
                 });
                 info!(
-                    "Marked {} as probability of {}",
+                    "Set {} as probability of {}",
                     movement.as_str(),
                     new_probability
                 );
             }
             None => {
                 info!(
-                    "Tried to mark {} as probability of {}, but {} is not a safe move",
+                    "Tried to set {} to have a probability of {}, but {} is not a safe move",
                     movement.as_str(),
                     new_probability,
+                    movement.as_str()
+                );
+            }
+        }
+    }
+
+    pub fn update_probability(&mut self, movement: &Movement, amount: isize) {
+        match self.moves.get(movement) {
+            Some(x) => {
+                let new_probability = max(0, x.probability_of_success as isize + amount);
+                self.set_probability(movement, new_probability as usize);
+            }
+            None => {
+                info!(
+                    "Tried to increment/decrement the probability of {} by {}, but {} is not a safe move",
+                    movement.as_str(),
+                    amount,
                     movement.as_str()
                 );
             }
@@ -117,13 +135,13 @@ impl WeightedMovementSet {
 #[test]
 fn pick_movement_picks_highest_probability() {
     let mut movement_set = WeightedMovementSet::new();
-    movement_set.change_probability(&Movement::Down, 101);
+    movement_set.set_probability(&Movement::Down, 101);
     assert!(movement_set.pick_movement() == Movement::Down);
-    movement_set.change_probability(&Movement::Up, 102);
+    movement_set.set_probability(&Movement::Up, 102);
     assert!(movement_set.pick_movement() == Movement::Up);
-    movement_set.change_probability(&Movement::Right, 103);
+    movement_set.set_probability(&Movement::Right, 103);
     assert!(movement_set.pick_movement() == Movement::Right);
-    movement_set.change_probability(&Movement::Left, 99);
+    movement_set.update_probability(&Movement::Left, -1);
     assert!(movement_set.pick_movement() == Movement::Right);
 }
 
@@ -133,6 +151,6 @@ fn remove_removes_option() {
     let size = movement_set.moves.len();
     movement_set.remove(&Movement::Down);
     assert!(movement_set.moves.len() == size - 1);
-    movement_set.change_probability(&Movement::Down, 100);
+    movement_set.set_probability(&Movement::Down, 100);
     assert!(movement_set.moves.len() == size - 1);
 }

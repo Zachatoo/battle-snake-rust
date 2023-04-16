@@ -93,7 +93,7 @@ fn avoid_hazards(hazards: &Vec<Coord>, you: &Battlesnake, set: &mut WeightedMove
     for adjacent_node in adjacent_nodes {
         for hazard in hazards {
             if hazard.x == adjacent_node.coord.x && hazard.y == adjacent_node.coord.y {
-                set.change_probability(&adjacent_node.movement, 30);
+                set.update_probability(&adjacent_node.movement, -70);
             }
         }
     }
@@ -116,9 +116,9 @@ fn handle_opponent_heads(
                     && adjacent_node.coord.y == adjacent_opponent_node.coord.y
                 {
                     if you.length <= opponent.length {
-                        set.change_probability(&adjacent_node.movement, 50);
+                        set.update_probability(&adjacent_node.movement, -50);
                     } else {
-                        set.change_probability(&adjacent_node.movement, 110);
+                        set.update_probability(&adjacent_node.movement, 30);
                     }
                 }
             }
@@ -182,7 +182,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     }
 
     match closest_food_node {
-        Some(node) => set.change_probability(&node.movement, 150),
+        Some(node) => set.update_probability(&node.movement, 20),
         _ => (),
     };
 }
