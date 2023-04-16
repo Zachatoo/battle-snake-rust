@@ -133,4 +133,6 @@ fn remove_removes_option() {
     let size = movement_set.moves.len();
     movement_set.remove(&Movement::Down);
     assert!(movement_set.moves.len() == size - 1);
+    movement_set.change_probability(&Movement::Down, 100);
+    assert!(movement_set.moves.len() == size - 1);
 }
