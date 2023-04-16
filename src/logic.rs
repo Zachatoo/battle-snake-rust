@@ -1,8 +1,9 @@
-use log::info;
+use std::collections::{HashSet, VecDeque};
+
 use serde_json::{json, Value};
 
 use crate::{
-    graph::Node,
+    graph::{LeafNode, Node},
     movement_set::{Movement, WeightedMovementSet},
     request::{Battlesnake, Board, Coord, Game},
     response::MoveResponse,
@@ -33,6 +34,7 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
 
     avoid_bounds(board.width, board.height, you, &mut movement_set);
     avoid_snake_bodies(&board.snakes, you, &mut movement_set);
+    scan_food(&board, you, &mut movement_set);
     handle_opponent_heads(&board.snakes, you, &mut movement_set);
 
     info!("Safe moves: {:?}", movement_set.moves);
@@ -103,6 +105,61 @@ fn handle_opponent_heads(
     }
 }
 
+fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
+    if board.food.len() == 0 {
+        return;
+    }
+
+    let my_head = you.head.to_owned();
+    let snake_coords = get_all_snake_coords(&board.snakes);
+
+    let mut closest_food_node: Option<Node> = None;
+    let mut frontier = VecDeque::<LeafNode>::new();
+    let mut visited_coords: HashSet<_> = vec![my_head].into_iter().collect();
+
+    let adjacent_nodes = get_adjacent_nodes(&my_head);
+    for adjacent_node in adjacent_nodes {
+        frontier.push_back(LeafNode {
+            node: adjacent_node,
+            parent: adjacent_node,
+        });
+        visited_coords.insert(adjacent_node.coord);
+    }
+
+    while !frontier.is_empty() {
+        let current = frontier.pop_front().unwrap();
+        let coord = &current.node.coord;
+
+        if board.food.contains(coord) {
+            info!("Found food at {} {}", coord.x, coord.y);
+            closest_food_node = Some(current.parent);
+            break;
+        }
+
+        let adjacent_nodes = get_adjacent_nodes(coord);
+        for adjacent_node in adjacent_nodes {
+            if adjacent_node.coord.x > 0
+                && adjacent_node.coord.x <= (board.width as i32)
+                && adjacent_node.coord.y > 0
+                && adjacent_node.coord.y <= (board.height as i32)
+                && !snake_coords.contains(&adjacent_node.coord)
+                && !visited_coords.contains(&adjacent_node.coord)
+            {
+                frontier.push_back(LeafNode {
+                    node: adjacent_node,
+                    parent: current.parent,
+                });
+                visited_coords.insert(adjacent_node.coord);
+            }
+        }
+    }
+
+    match closest_food_node {
+        Some(node) => set.change_probability(&node.movement, 150),
+        _ => (),
+    };
+}
+
 fn snake_is_stacked(snake: &Battlesnake) -> bool {
     for i in 0..snake.body.len() - 1 {
         for j in i + 1..snake.body.len() {
@@ -145,4 +202,14 @@ fn get_adjacent_nodes(coord: &Coord) -> Vec<Node> {
             movement: Movement::Right,
         },
     ]
+}
+
+fn get_all_snake_coords(snakes: &Vec<Battlesnake>) -> HashSet<Coord> {
+    let mut coords: HashSet<Coord> = HashSet::new();
+    for snake in snakes {
+        for coord in &snake.body {
+            coords.insert(*coord);
+        }
+    }
+    coords
 }

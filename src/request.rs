@@ -22,7 +22,7 @@ pub struct Board {
     pub hazards: Vec<Coord>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Coord {
     pub x: i32,
     pub y: i32,
