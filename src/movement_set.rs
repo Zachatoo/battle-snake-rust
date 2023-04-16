@@ -83,15 +83,27 @@ impl WeightedMovementSet {
     }
 
     pub fn change_probability(&mut self, movement: &Movement, new_probability: usize) {
-        self.moves.replace(WeightedMovement {
-            movement: movement.to_owned(),
-            probability_of_success: new_probability,
-        });
-        info!(
-            "Marked {} as probability of {}",
-            movement.as_str(),
-            new_probability
-        );
+        match self.moves.get(movement) {
+            Some(_) => {
+                self.moves.replace(WeightedMovement {
+                    movement: movement.to_owned(),
+                    probability_of_success: new_probability,
+                });
+                info!(
+                    "Marked {} as probability of {}",
+                    movement.as_str(),
+                    new_probability
+                );
+            }
+            None => {
+                info!(
+                    "Tried to mark {} as probability of {}, but {} is not a safe move",
+                    movement.as_str(),
+                    new_probability,
+                    movement.as_str()
+                );
+            }
+        }
     }
 
     pub fn pick_movement(&self) -> Movement {
