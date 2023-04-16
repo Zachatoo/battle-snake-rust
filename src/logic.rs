@@ -115,7 +115,9 @@ fn handle_opponent_heads(
                 if adjacent_node.coord.x == adjacent_opponent_node.coord.x
                     && adjacent_node.coord.y == adjacent_opponent_node.coord.y
                 {
-                    if you.length <= opponent.length {
+                    if you.length < opponent.length {
+                        set.update_probability(&adjacent_node.movement, -60);
+                    } else if you.length == opponent.length {
                         set.update_probability(&adjacent_node.movement, -50);
                     } else {
                         set.update_probability(&adjacent_node.movement, 30);
