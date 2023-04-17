@@ -41,7 +41,15 @@ pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> V
     info!("Safe moves: {:?}", movement_set.moves);
     let chosen_move = movement_set.pick_movement().as_str().to_string();
     info!("MOVE {}: {}", turn, chosen_move);
-    return json!(MoveResponse { chosen_move });
+    return json!(MoveResponse {
+        chosen_move,
+        shout: movement_set
+            .moves
+            .into_iter()
+            .map(|x| x.movement.as_str().to_owned())
+            .collect::<Vec<String>>()
+            .join(","),
+    });
 }
 
 fn avoid_bounds(width: u32, height: u32, you: &Battlesnake, set: &mut WeightedMovementSet) {

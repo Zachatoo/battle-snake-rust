@@ -4,4 +4,5 @@ use serde::{Deserialize, Serialize};
 pub struct MoveResponse {
     #[serde(rename = "move")]
     pub chosen_move: String,
+    pub shout: String,
 }

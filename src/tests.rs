@@ -64,6 +64,7 @@ fn movement_avoid_moving_out_of_bounds() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
+    assert_eq!(parsed_body.shout, "up");
 }
 
 #[test]
@@ -126,6 +127,7 @@ fn movement_tail_is_safe() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
+    assert_eq!(parsed_body.shout, "up");
 }
 
 #[test]
@@ -212,6 +214,7 @@ fn movement_avoid_snake_bodies() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "left");
+    assert_eq!(parsed_body.shout, "left");
 }
 
 #[test]
@@ -299,6 +302,8 @@ fn movement_prefer_safe_move_to_semisafe_move() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
+    assert!(parsed_body.shout.contains("up"));
+    assert!(parsed_body.shout.contains("left"));
 }
 
 #[test]
@@ -361,6 +366,9 @@ fn movement_prefer_food() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
+    assert!(parsed_body.shout.contains("up"));
+    assert!(parsed_body.shout.contains("down"));
+    assert!(parsed_body.shout.contains("left"));
 }
 
 #[test]
@@ -437,6 +445,8 @@ fn movement_prefer_food_avoid_snake() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "down");
+    assert!(parsed_body.shout.contains("down"));
+    assert!(parsed_body.shout.contains("left"));
 }
 
 #[test]
@@ -501,4 +511,7 @@ fn movement_prefer_food_avoid_self() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_ne!(parsed_body.chosen_move, "left");
+    assert!(parsed_body.shout.contains("right"));
+    assert!(parsed_body.shout.contains("up"));
+    assert!(parsed_body.shout.contains("down"));
 }
