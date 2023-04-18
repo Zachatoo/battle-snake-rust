@@ -145,7 +145,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     let my_head = you.head.to_owned();
     let snake_coords = get_all_snake_coords(&board.snakes);
 
-    let mut closest_food_node: Option<Node> = None;
+    let mut food_movements = VecDeque::<Movement>::new();
     let mut frontier = VecDeque::<LeafNode>::new();
     let mut visited_coords: HashSet<_> = vec![my_head].into_iter().collect();
 
@@ -169,8 +169,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
 
         if board.food.contains(coord) {
             info!("Found food at {} {}", coord.x, coord.y);
-            closest_food_node = Some(current.parent);
-            break;
+            food_movements.push_back(current.parent.movement);
         }
 
         let adjacent_nodes = get_adjacent_nodes(coord);
@@ -191,10 +190,15 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
         }
     }
 
-    match closest_food_node {
-        Some(node) => set.update_probability(&node.movement, 20),
-        _ => (),
-    };
+    let mut probability = 20;
+    loop {
+        let movement = match food_movements.pop_front() {
+            Some(x) => x,
+            None => break,
+        };
+        set.update_probability(&movement, probability);
+        probability -= 5;
+    }
 }
 
 fn snake_is_stacked(snake: &Battlesnake) -> bool {
