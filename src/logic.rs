@@ -175,10 +175,10 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
 
         let adjacent_nodes = get_adjacent_nodes(coord);
         for adjacent_node in adjacent_nodes {
-            if adjacent_node.coord.x > 0
-                && adjacent_node.coord.x <= (board.width as i32)
-                && adjacent_node.coord.y > 0
-                && adjacent_node.coord.y <= (board.height as i32)
+            if adjacent_node.coord.x >= 0
+                && adjacent_node.coord.x < (board.width as i32)
+                && adjacent_node.coord.y >= 0
+                && adjacent_node.coord.y < (board.height as i32)
                 && !snake_coords.contains(&adjacent_node.coord)
                 && !visited_coords.contains(&adjacent_node.coord)
             {

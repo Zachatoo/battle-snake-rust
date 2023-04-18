@@ -516,8 +516,6 @@ fn movement_prefer_food_avoid_self() {
     assert!(parsed_body.shout.contains("down"));
 }
 
-// TODO: Get this test to pass
-#[ignore]
 #[test]
 fn movement_prefer_food_long_scan() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
@@ -604,5 +602,6 @@ fn movement_prefer_food_long_scan() {
         .into_json::<MoveResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "right");
-    assert_eq!(parsed_body.shout, "right");
+    assert!(parsed_body.shout.contains("right"));
+    assert!(parsed_body.shout.contains("left"));
 }
