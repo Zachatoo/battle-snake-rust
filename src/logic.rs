@@ -1,8 +1,9 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 
 use serde_json::{json, Value};
 
 use crate::{
+    fifo_queue::FifoQueue,
     graph::{LeafNode, Node},
     movement_set::{Movement, WeightedMovementSet},
     request::{Battlesnake, Board, Coord, Game},
@@ -145,14 +146,14 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     let my_head = you.head.to_owned();
     let snake_coords = get_all_snake_coords(&board.snakes);
 
-    let mut food_movements = VecDeque::<Movement>::new();
-    let mut frontier = VecDeque::<LeafNode>::new();
+    let mut food_movements = FifoQueue::<Movement>::new();
+    let mut frontier = FifoQueue::<LeafNode>::new();
     let mut visited_coords: HashSet<_> = vec![my_head].into_iter().collect();
 
     let adjacent_nodes = get_adjacent_nodes(&my_head);
     for adjacent_node in adjacent_nodes {
         if set.moves.contains(&adjacent_node.movement) {
-            frontier.push_back(LeafNode {
+            frontier.enqueue(LeafNode {
                 node: adjacent_node,
                 parent: adjacent_node,
             });
@@ -161,7 +162,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     }
 
     loop {
-        let current = match frontier.pop_front() {
+        let current = match frontier.dequeue() {
             Some(x) => x,
             None => break,
         };
@@ -169,7 +170,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
 
         if board.food.contains(coord) {
             info!("Found food at {} {}", coord.x, coord.y);
-            food_movements.push_back(current.parent.movement);
+            food_movements.enqueue(current.parent.movement);
         }
 
         let adjacent_nodes = get_adjacent_nodes(coord);
@@ -181,7 +182,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
                 && !snake_coords.contains(&adjacent_node.coord)
                 && !visited_coords.contains(&adjacent_node.coord)
             {
-                frontier.push_back(LeafNode {
+                frontier.enqueue(LeafNode {
                     node: adjacent_node,
                     parent: current.parent,
                 });
@@ -192,7 +193,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
 
     let mut probability = 20;
     loop {
-        let movement = match food_movements.pop_front() {
+        let movement = match food_movements.dequeue() {
             Some(x) => x,
             None => break,
         };

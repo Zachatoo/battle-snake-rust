@@ -11,6 +11,7 @@ use std::env;
 use crate::request::GameState;
 
 mod auth;
+mod fifo_queue;
 mod graph;
 mod logic;
 mod movement_set;
