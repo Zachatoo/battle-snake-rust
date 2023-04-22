@@ -1,60 +1,13 @@
 use std::collections::HashSet;
 
-use serde_json::{json, Value};
-
 use crate::{
     fifo_queue::FifoQueue,
-    graph::{LeafNode, Node},
+    graph::{get_adjacent_nodes, LeafNode},
     movement_set::{Movement, WeightedMovementSet},
-    request::{Battlesnake, Board, Coord, Game},
-    response::MoveResponse,
+    request::{Battlesnake, Board, Coord},
 };
 
-pub fn info() -> Value {
-    info!("INFO");
-
-    return json!({
-        "apiversion": "1",
-        "author": "Zachatoo",
-        "color": "#00AA33",
-        "head": "gamer",
-        "tail": "round-bum",
-    });
-}
-
-pub fn start(game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
-    info!("GAME START {}", game.id);
-}
-
-pub fn end(game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
-    info!("GAME OVER {}", game.id);
-}
-
-pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> Value {
-    let mut movement_set = WeightedMovementSet::new();
-
-    avoid_bounds(board.width, board.height, you, &mut movement_set);
-    avoid_snake_bodies(&board.snakes, you, &mut movement_set);
-    scan_food(&board, you, &mut movement_set);
-    avoid_small_spaces(&board, you, &mut movement_set);
-    handle_opponent_heads(&board.snakes, you, &mut movement_set);
-    avoid_hazards(&board.hazards, you, &mut movement_set);
-
-    info!("Safe moves: {:?}", movement_set.moves);
-    let chosen_move = movement_set.pick_movement().as_str().to_string();
-    info!("MOVE {}: {}", turn, chosen_move);
-    return json!(MoveResponse {
-        chosen_move,
-        shout: movement_set
-            .moves
-            .into_iter()
-            .map(|x| x.movement.as_str().to_owned())
-            .collect::<Vec<String>>()
-            .join(","),
-    });
-}
-
-fn avoid_bounds(width: u32, height: u32, you: &Battlesnake, set: &mut WeightedMovementSet) {
+pub fn avoid_bounds(width: u32, height: u32, you: &Battlesnake, set: &mut WeightedMovementSet) {
     info!("Avoiding going out of bounds");
     let my_head = &you.head;
     let adjacent_nodes = get_adjacent_nodes(my_head);
@@ -69,7 +22,11 @@ fn avoid_bounds(width: u32, height: u32, you: &Battlesnake, set: &mut WeightedMo
     }
 }
 
-fn avoid_snake_bodies(snakes: &Vec<Battlesnake>, you: &Battlesnake, set: &mut WeightedMovementSet) {
+pub fn avoid_snake_bodies(
+    snakes: &Vec<Battlesnake>,
+    you: &Battlesnake,
+    set: &mut WeightedMovementSet,
+) {
     info!("Avoiding snake bodies");
     let my_head = &you.head;
     let adjacent_nodes = get_adjacent_nodes(my_head);
@@ -92,7 +49,7 @@ fn avoid_snake_bodies(snakes: &Vec<Battlesnake>, you: &Battlesnake, set: &mut We
     }
 }
 
-fn avoid_hazards(hazards: &Vec<Coord>, you: &Battlesnake, set: &mut WeightedMovementSet) {
+pub fn avoid_hazards(hazards: &Vec<Coord>, you: &Battlesnake, set: &mut WeightedMovementSet) {
     if hazards.len() == 0 {
         return;
     }
@@ -109,7 +66,7 @@ fn avoid_hazards(hazards: &Vec<Coord>, you: &Battlesnake, set: &mut WeightedMove
     }
 }
 
-fn handle_opponent_heads(
+pub fn handle_opponent_heads(
     snakes: &Vec<Battlesnake>,
     you: &Battlesnake,
     set: &mut WeightedMovementSet,
@@ -138,7 +95,7 @@ fn handle_opponent_heads(
     }
 }
 
-fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
+pub fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     if board.food.len() == 0 {
         return;
     }
@@ -203,7 +160,7 @@ fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     }
 }
 
-fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
+pub fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
     info!("Check if snake can fit in space");
 
     let my_head = you.head.to_owned();
@@ -268,7 +225,7 @@ fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMoveme
     }
 }
 
-fn snake_is_stacked(snake: &Battlesnake) -> bool {
+pub fn snake_is_stacked(snake: &Battlesnake) -> bool {
     for i in 0..snake.body.len() - 1 {
         for j in i + 1..snake.body.len() {
             if snake.body[i] == snake.body[j] {
@@ -279,40 +236,7 @@ fn snake_is_stacked(snake: &Battlesnake) -> bool {
     false
 }
 
-fn get_adjacent_nodes(coord: &Coord) -> Vec<Node> {
-    vec![
-        Node {
-            coord: Coord {
-                x: coord.x,
-                y: coord.y + 1,
-            },
-            movement: Movement::Up,
-        },
-        Node {
-            coord: Coord {
-                x: coord.x,
-                y: coord.y - 1,
-            },
-            movement: Movement::Down,
-        },
-        Node {
-            coord: Coord {
-                x: coord.x - 1,
-                y: coord.y,
-            },
-            movement: Movement::Left,
-        },
-        Node {
-            coord: Coord {
-                x: coord.x + 1,
-                y: coord.y,
-            },
-            movement: Movement::Right,
-        },
-    ]
-}
-
-fn get_all_snake_coords(snakes: &Vec<Battlesnake>) -> HashSet<Coord> {
+pub fn get_all_snake_coords(snakes: &Vec<Battlesnake>) -> HashSet<Coord> {
     let mut coords: HashSet<Coord> = HashSet::new();
     for snake in snakes {
         for coord in &snake.body {

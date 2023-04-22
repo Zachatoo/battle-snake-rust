@@ -5,7 +5,7 @@ use log::info;
 use rocket::fairing::AdHoc;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::env;
 
 use crate::request::GameState;
@@ -17,17 +17,16 @@ mod logic;
 mod movement_set;
 mod request;
 mod response;
-#[cfg(test)]
-mod tests;
+mod snakes;
 
 #[get("/")]
-fn handle_index(_key: auth::ApiKey<'_>) -> Json<Value> {
-    Json(logic::info())
+fn rusty_handle_index(_key: auth::ApiKey<'_>) -> Json<Value> {
+    Json(json!(snakes::rusty::info()))
 }
 
 #[post("/start", format = "json", data = "<start_req>")]
-fn handle_start(start_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
-    logic::start(
+fn rusty_handle_start(start_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
+    snakes::rusty::start(
         &start_req.game,
         &start_req.turn,
         &start_req.board,
@@ -38,20 +37,56 @@ fn handle_start(start_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
 }
 
 #[post("/move", format = "json", data = "<move_req>")]
-fn handle_move(move_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Json<Value> {
-    let response = logic::get_move(
+fn rusty_handle_move(move_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Json<Value> {
+    let response = snakes::rusty::get_move(
         &move_req.game,
         &move_req.turn,
         &move_req.board,
         &move_req.you,
     );
 
-    Json(response)
+    Json(json!(response))
 }
 
 #[post("/end", format = "json", data = "<end_req>")]
-fn handle_end(end_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
-    logic::end(&end_req.game, &end_req.turn, &end_req.board, &end_req.you);
+fn rusty_handle_end(end_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
+    snakes::rusty::end(&end_req.game, &end_req.turn, &end_req.board, &end_req.you);
+
+    Status::Ok
+}
+
+#[get("/")]
+fn righty_handle_index(_key: auth::ApiKey<'_>) -> Json<Value> {
+    Json(json!(snakes::righty::info()))
+}
+
+#[post("/start", format = "json", data = "<start_req>")]
+fn righty_handle_start(start_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
+    snakes::righty::start(
+        &start_req.game,
+        &start_req.turn,
+        &start_req.board,
+        &start_req.you,
+    );
+
+    Status::Ok
+}
+
+#[post("/move", format = "json", data = "<move_req>")]
+fn righty_handle_move(move_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Json<Value> {
+    let response = snakes::righty::get_move(
+        &move_req.game,
+        &move_req.turn,
+        &move_req.board,
+        &move_req.you,
+    );
+
+    Json(json!(response))
+}
+
+#[post("/end", format = "json", data = "<end_req>")]
+fn righty_handle_end(end_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
+    snakes::righty::end(&end_req.game, &end_req.turn, &end_req.board, &end_req.you);
 
     Status::Ok
 }
@@ -86,6 +121,29 @@ fn rocket() -> _ {
         }))
         .mount(
             "/",
-            routes![handle_index, handle_start, handle_move, handle_end],
+            routes![
+                rusty_handle_index,
+                rusty_handle_start,
+                rusty_handle_move,
+                rusty_handle_end
+            ],
+        )
+        .mount(
+            "/rusty",
+            routes![
+                rusty_handle_index,
+                rusty_handle_start,
+                rusty_handle_move,
+                rusty_handle_end
+            ],
+        )
+        .mount(
+            "/righty",
+            routes![
+                righty_handle_index,
+                righty_handle_start,
+                righty_handle_move,
+                righty_handle_end
+            ],
         )
 }

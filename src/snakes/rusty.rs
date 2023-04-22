@@ -1,16 +1,72 @@
-use crate::response::MoveResponse;
+use crate::{
+    logic::{
+        avoid_bounds, avoid_hazards, avoid_small_spaces, avoid_snake_bodies, handle_opponent_heads,
+        scan_food,
+    },
+    movement_set::WeightedMovementSet,
+    request::{Battlesnake, Board, Game},
+    response::{InfoResponse, MoveShoutResponse},
+};
 
-use super::rocket;
+#[cfg(test)]
+use crate::rocket;
+#[cfg(test)]
 use rocket::{
     http::{ContentType, Status},
     local::blocking::Client,
 };
 
+pub fn info() -> InfoResponse {
+    info!("INFO");
+    InfoResponse {
+        api_version: "1".to_string(),
+        author: "Zachatoo".to_string(),
+        color: "#00AA33".to_string(),
+        head: "gamer".to_string(),
+        tail: "round-bum".to_string(),
+    }
+}
+
+pub fn start(game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
+    info!("{} GAME START", game.id);
+}
+
+pub fn end(game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
+    info!("{} GAME OVER", game.id);
+}
+
+pub fn get_move(game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> MoveShoutResponse {
+    let mut movement_set = WeightedMovementSet::new();
+
+    avoid_bounds(board.width, board.height, you, &mut movement_set);
+    avoid_snake_bodies(&board.snakes, you, &mut movement_set);
+    scan_food(&board, you, &mut movement_set);
+    avoid_small_spaces(&board, you, &mut movement_set);
+    handle_opponent_heads(&board.snakes, you, &mut movement_set);
+    avoid_hazards(&board.hazards, you, &mut movement_set);
+
+    info!("Safe moves: {:?}", movement_set.moves);
+    let chosen_move = movement_set.pick_movement().as_str().to_string();
+    info!("{} MOVE {}: {}", game.id, turn, chosen_move);
+    MoveShoutResponse {
+        chosen_move,
+        shout: movement_set
+            .moves
+            .into_iter()
+            .map(|x| x.movement.as_str().to_owned())
+            .collect::<Vec<String>>()
+            .join(","),
+    }
+}
+
+#[cfg(test)]
+static MOVE_URI: &str = "/rusty/move?x-api-key=valid_api_key";
+
 #[test]
 fn movement_avoid_moving_out_of_bounds() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -61,7 +117,7 @@ fn movement_avoid_moving_out_of_bounds() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
     assert_eq!(parsed_body.shout, "up");
@@ -71,7 +127,7 @@ fn movement_avoid_moving_out_of_bounds() {
 fn movement_tail_is_safe() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -124,7 +180,7 @@ fn movement_tail_is_safe() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
     assert_eq!(parsed_body.shout, "up");
@@ -134,7 +190,7 @@ fn movement_tail_is_safe() {
 fn movement_avoid_snake_bodies() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -211,7 +267,7 @@ fn movement_avoid_snake_bodies() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "left");
     assert_eq!(parsed_body.shout, "left");
@@ -221,7 +277,7 @@ fn movement_avoid_snake_bodies() {
 fn movement_prefer_safe_move_to_semisafe_move() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -299,7 +355,7 @@ fn movement_prefer_safe_move_to_semisafe_move() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
     assert!(parsed_body.shout.contains("up"));
@@ -312,7 +368,7 @@ fn movement_prefer_safe_move_to_semisafe_move() {
 fn movement_prefer_food() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -365,7 +421,7 @@ fn movement_prefer_food() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "up");
     assert!(parsed_body.shout.contains("up"));
@@ -378,7 +434,7 @@ fn movement_prefer_food() {
 fn movement_prefer_food_avoid_snake() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -445,7 +501,7 @@ fn movement_prefer_food_avoid_snake() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "down");
     assert!(parsed_body.shout.contains("down"));
@@ -458,7 +514,7 @@ fn movement_prefer_food_avoid_snake() {
 fn movement_prefer_food_avoid_self() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -513,7 +569,7 @@ fn movement_prefer_food_avoid_self() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_ne!(parsed_body.chosen_move, "left");
     assert!(!parsed_body.shout.contains("left"));
@@ -526,7 +582,7 @@ fn movement_prefer_food_avoid_self() {
 fn movement_prefer_food_long_scan() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -605,7 +661,7 @@ fn movement_prefer_food_long_scan() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "right");
     assert!(parsed_body.shout.contains("right"));
@@ -618,7 +674,7 @@ fn movement_prefer_food_long_scan() {
 fn movement_prefer_food_prefer_closer_food() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -672,7 +728,7 @@ fn movement_prefer_food_prefer_closer_food() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "left");
     assert!(parsed_body.shout.contains("right"));
@@ -685,7 +741,7 @@ fn movement_prefer_food_prefer_closer_food() {
 fn movement_avoid_small_spaces() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
-        .post("/move?x-api-key=valid_api_key")
+        .post(MOVE_URI)
         .header(ContentType::JSON)
         .body(
             r#"{
@@ -738,7 +794,7 @@ fn movement_avoid_small_spaces() {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     let parsed_body = response
-        .into_json::<MoveResponse>()
+        .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "left");
     assert!(parsed_body.shout.contains("right"));
