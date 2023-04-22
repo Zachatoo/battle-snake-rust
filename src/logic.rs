@@ -227,8 +227,7 @@ fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMoveme
             vec![my_head, adjacent_node.coord].into_iter().collect();
 
         loop {
-            if my_length > visited_coords.len() {
-                set.update_score(movement, -70);
+            if visited_coords.len() >= my_length {
                 frontier.clear();
                 break;
             }
