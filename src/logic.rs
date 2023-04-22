@@ -22,12 +22,12 @@ pub fn info() -> Value {
     });
 }
 
-pub fn start(_game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
-    info!("GAME START");
+pub fn start(game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
+    info!("GAME START {}", game.id);
 }
 
-pub fn end(_game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
-    info!("GAME OVER");
+pub fn end(game: &Game, _turn: &u32, _board: &Board, _you: &Battlesnake) {
+    info!("GAME OVER {}", game.id);
 }
 
 pub fn get_move(_game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> Value {
