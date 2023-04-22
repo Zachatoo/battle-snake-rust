@@ -1,5 +1,4 @@
 use std::borrow::Borrow;
-use std::cmp::max;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
@@ -27,7 +26,7 @@ impl Movement {
 #[derive(Debug, Eq)]
 pub struct WeightedMovement {
     pub movement: Movement,
-    pub probability_of_success: usize,
+    pub success_score: isize,
 }
 
 impl PartialEq for WeightedMovement {
@@ -58,19 +57,19 @@ impl WeightedMovementSet {
             moves: vec![
                 WeightedMovement {
                     movement: Movement::Up,
-                    probability_of_success: 100,
+                    success_score: 100,
                 },
                 WeightedMovement {
                     movement: Movement::Down,
-                    probability_of_success: 100,
+                    success_score: 100,
                 },
                 WeightedMovement {
                     movement: Movement::Left,
-                    probability_of_success: 100,
+                    success_score: 100,
                 },
                 WeightedMovement {
                     movement: Movement::Right,
-                    probability_of_success: 100,
+                    success_score: 100,
                 },
             ]
             .into_iter()
@@ -83,35 +82,31 @@ impl WeightedMovementSet {
         info!("Set {} as unsafe", movement.as_str());
     }
 
-    pub fn set_probability(&mut self, movement: &Movement, new_probability: usize) {
+    pub fn set_score(&mut self, movement: &Movement, new_score: isize) {
         match self.moves.get(movement) {
             Some(_) => {
                 self.moves.replace(WeightedMovement {
                     movement: movement.to_owned(),
-                    probability_of_success: new_probability,
+                    success_score: new_score,
                 });
-                info!(
-                    "Set {} as probability of {}",
-                    movement.as_str(),
-                    new_probability
-                );
+                info!("Set {} as probability of {}", movement.as_str(), new_score);
             }
             None => {
                 info!(
                     "Tried to set {} to have a probability of {}, but {} is not a safe move",
                     movement.as_str(),
-                    new_probability,
+                    new_score,
                     movement.as_str()
                 );
             }
         }
     }
 
-    pub fn update_probability(&mut self, movement: &Movement, amount: isize) {
+    pub fn update_score(&mut self, movement: &Movement, amount: isize) {
         match self.moves.get(movement) {
             Some(x) => {
-                let new_probability = max(0, x.probability_of_success as isize + amount);
-                self.set_probability(movement, new_probability as usize);
+                let new_probability = x.success_score + amount;
+                self.set_score(movement, new_probability);
             }
             None => {
                 info!(
@@ -125,7 +120,7 @@ impl WeightedMovementSet {
     }
 
     pub fn pick_movement(&self) -> Movement {
-        match self.moves.iter().max_by_key(|x| x.probability_of_success) {
+        match self.moves.iter().max_by_key(|x| x.success_score) {
             Some(x) => x.movement,
             None => Movement::Up,
         }
@@ -135,13 +130,13 @@ impl WeightedMovementSet {
 #[test]
 fn pick_movement_picks_highest_probability() {
     let mut movement_set = WeightedMovementSet::new();
-    movement_set.set_probability(&Movement::Down, 101);
+    movement_set.set_score(&Movement::Down, 101);
     assert!(movement_set.pick_movement() == Movement::Down);
-    movement_set.set_probability(&Movement::Up, 102);
+    movement_set.set_score(&Movement::Up, 102);
     assert!(movement_set.pick_movement() == Movement::Up);
-    movement_set.set_probability(&Movement::Right, 103);
+    movement_set.set_score(&Movement::Right, 103);
     assert!(movement_set.pick_movement() == Movement::Right);
-    movement_set.update_probability(&Movement::Left, -1);
+    movement_set.update_score(&Movement::Left, -1);
     assert!(movement_set.pick_movement() == Movement::Right);
 }
 
@@ -151,6 +146,6 @@ fn remove_removes_option() {
     let size = movement_set.moves.len();
     movement_set.remove(&Movement::Down);
     assert!(movement_set.moves.len() == size - 1);
-    movement_set.set_probability(&Movement::Down, 100);
+    movement_set.set_score(&Movement::Down, 100);
     assert!(movement_set.moves.len() == size - 1);
 }
