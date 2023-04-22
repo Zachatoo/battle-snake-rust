@@ -227,6 +227,11 @@ fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMoveme
             vec![my_head, adjacent_node.coord].into_iter().collect();
 
         loop {
+            if my_length > visited_coords.len() {
+                set.update_score(movement, -70);
+                frontier.clear();
+                break;
+            }
             let current = match frontier.dequeue() {
                 Some(x) => x,
                 None => {

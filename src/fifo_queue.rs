@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 pub struct FifoQueue<T> {
-    pub queue: VecDeque<T>,
+    queue: VecDeque<T>,
 }
 
 impl<T> FifoQueue<T> {
@@ -17,5 +17,9 @@ impl<T> FifoQueue<T> {
 
     pub fn dequeue(&mut self) -> Option<T> {
         self.queue.pop_front()
+    }
+
+    pub fn clear(&mut self) {
+        self.queue.clear();
     }
 }
