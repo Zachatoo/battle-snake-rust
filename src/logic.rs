@@ -156,7 +156,10 @@ pub fn scan_food(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet
             None => break,
         };
         set.update_score(&movement, probability);
-        probability -= 5;
+        probability -= 10;
+        if probability == 0 {
+            break;
+        }
     }
 }
 
