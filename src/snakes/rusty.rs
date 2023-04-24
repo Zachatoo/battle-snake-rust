@@ -898,3 +898,110 @@ fn movement_prefer_food_prefer_single_closer_food_to_two_further_food() {
     assert!(!parsed_body.shout.contains("up"));
     assert!(!parsed_body.shout.contains("down"));
 }
+
+#[ignore = "Not implemented yet"]
+#[test]
+fn movement_trap_enemy_snake_against_wall() {
+    let client = Client::untracked(rocket()).expect("Failed to create client instance");
+    let response = client
+        .post(MOVE_URI)
+        .header(ContentType::JSON)
+        .body(
+            r#"{
+              "game": {
+                "id": "unique-game-id",
+                "ruleset": {
+                  "name": "standard"
+                },
+                "timeout": 500
+              },
+              "turn": 47,
+              "board": {
+                "height": 11,
+                "width": 11,
+                "food": [
+                  { "x": 9, "y": 9 }
+                ],
+                "hazards": [],
+                "snakes": [
+                  {
+                    "id": "my-snake",
+                    "name": "My Snake",
+                    "health": 89,
+                    "body": [
+                      { "x": 1, "y": 9 },
+                      { "x": 1, "y": 8 },
+                      { "x": 1, "y": 7 },
+                      { "x": 1, "y": 6 },
+                      { "x": 1, "y": 5 },
+                      { "x": 1, "y": 4 },
+                      { "x": 2, "y": 4 },
+                      { "x": 3, "y": 4 },
+                      { "x": 4, "y": 4 },
+                      { "x": 4, "y": 5 },
+                      { "x": 4, "y": 6 }
+                    ],
+                    "latency": "111",
+                    "head": {"x": 1, "y": 9},
+                    "length": 11
+                  },
+                  {
+                    "id": "snake-2",
+                    "name": "Snake 2",
+                    "health": 93,
+                    "body": [
+                      {"x": 0, "y": 4},
+                      {"x": 0, "y": 3},
+                      {"x": 1, "y": 3},
+                      {"x": 2, "y": 3},
+                      {"x": 3, "y": 3},
+                      {"x": 4, "y": 3},
+                      {"x": 4, "y": 2},
+                      {"x": 4, "y": 1},
+                      {"x": 4, "y": 0},
+                      {"x": 5, "y": 0},
+                      {"x": 5, "y": 1},
+                      {"x": 5, "y": 2},
+                      {"x": 5, "y": 3},
+                      {"x": 5, "y": 4}
+                    ],
+                    "latency": "111",
+                    "head": {"x": 0, "y": 4},
+                    "length": 14
+                  }
+                ]
+              },
+              "you": {
+                "id": "my-snake",
+                "name": "My Snake",
+                "health": 89,
+                "body": [
+                  { "x": 1, "y": 9 },
+                  { "x": 1, "y": 8 },
+                  { "x": 1, "y": 7 },
+                  { "x": 1, "y": 6 },
+                  { "x": 1, "y": 5 },
+                  { "x": 1, "y": 4 },
+                  { "x": 2, "y": 4 },
+                  { "x": 3, "y": 4 },
+                  { "x": 4, "y": 4 },
+                  { "x": 4, "y": 5 },
+                  { "x": 4, "y": 6 }
+                ],
+                "latency": "111",
+                "head": {"x": 1, "y": 9},
+                "length": 11
+              }
+            }"#,
+        )
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let parsed_body = response
+        .into_json::<MoveShoutResponse>()
+        .expect("failed to parse response");
+    assert_eq!(parsed_body.chosen_move, "left");
+    assert!(parsed_body.shout.contains("right"));
+    assert!(parsed_body.shout.contains("left"));
+    assert!(parsed_body.shout.contains("up"));
+    assert!(!parsed_body.shout.contains("down"));
+}
