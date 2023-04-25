@@ -767,11 +767,14 @@ fn movement_avoid_small_spaces() {
                       {"x": 9, "y": 0},
                       {"x": 9, "y": 1},
                       {"x": 9, "y": 2},
-                      {"x": 10, "y": 2}
+                      {"x": 10, "y": 2},
+                      {"x": 10, "y": 3},
+                      {"x": 10, "y": 4},
+                      {"x": 10, "y": 5}
                     ],
                     "latency": "111",
                     "head": {"x": 9, "y": 0},
-                    "length": 4
+                    "length": 7
                   }
                 ]
               },
@@ -783,11 +786,14 @@ fn movement_avoid_small_spaces() {
                   {"x": 9, "y": 0},
                   {"x": 9, "y": 1},
                   {"x": 9, "y": 2},
-                  {"x": 10, "y": 2}
+                  {"x": 10, "y": 2},
+                  {"x": 10, "y": 3},
+                  {"x": 10, "y": 4},
+                  {"x": 10, "y": 5}
                 ],
                 "latency": "111",
                 "head": {"x": 9, "y": 0},
-                "length": 4
+                "length": 7
               }
             }"#,
         )
@@ -1003,5 +1009,199 @@ fn movement_trap_enemy_snake_against_wall() {
     assert!(parsed_body.shout.contains("right"));
     assert!(parsed_body.shout.contains("left"));
     assert!(parsed_body.shout.contains("up"));
+    assert!(!parsed_body.shout.contains("down"));
+}
+
+#[test]
+fn movement_avoid_small_spaces_prefer_survival_to_food() {
+    let client = Client::untracked(rocket()).expect("Failed to create client instance");
+    let response = client
+        .post(MOVE_URI)
+        .header(ContentType::JSON)
+        .body(
+            r#"{
+              "game": {
+                "id": "unique-game-id",
+                "ruleset": {
+                  "name": "standard"
+                },
+                "timeout": 500
+              },
+              "turn": 54,
+              "board": {
+                "height": 11,
+                "width": 11,
+                "food": [
+                  { "x": 3, "y": 1 },
+                  { "x": 1, "y": 7 }
+                ],
+                "hazards": [],
+                "snakes": [
+                  {
+                    "id": "my-snake",
+                    "name": "My Snake",
+                    "health": 98,
+                    "body": [
+                      { "x": 8, "y": 10 },
+                      { "x": 8, "y": 9 },
+                      { "x": 8, "y": 8 },
+                      { "x": 9, "y": 8 },
+                      { "x": 10, "y": 8 },
+                      { "x": 10, "y": 7 },
+                      { "x": 10, "y": 6 },
+                      { "x": 10, "y": 5 }
+                    ],
+                    "latency": "111",
+                    "head": {"x": 8, "y": 10},
+                    "length": 8
+                  },
+                  {
+                    "id": "snake-2",
+                    "name": "Snake 2",
+                    "health": 73,
+                    "body": [
+                      { "x": 7, "y": 9 },
+                      { "x": 7, "y": 8 },
+                      { "x": 7, "y": 7 },
+                      { "x": 7, "y": 6 },
+                      { "x": 7, "y": 5 },
+                      { "x": 7, "y": 4 },
+                      { "x": 6, "y": 4 },
+                      { "x": 5, "y": 4 },
+                      { "x": 5, "y": 3 }
+                    ],
+                    "latency": "111",
+                    "head": {"x": 7, "y": 9},
+                    "length": 9
+                  }
+                ]
+              },
+              "you": {
+                "id": "my-snake",
+                "name": "My Snake",
+                "health": 98,
+                "body": [
+                  { "x": 8, "y": 10 },
+                  { "x": 8, "y": 9 },
+                  { "x": 8, "y": 8 },
+                  { "x": 9, "y": 8 },
+                  { "x": 10, "y": 8 },
+                  { "x": 10, "y": 7 },
+                  { "x": 10, "y": 6 },
+                  { "x": 10, "y": 5 }
+                ],
+                "latency": "111",
+                "head": {"x": 8, "y": 10},
+                "length": 8
+              }
+            }"#,
+        )
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let parsed_body = response
+        .into_json::<MoveShoutResponse>()
+        .expect("failed to parse response");
+    assert_eq!(parsed_body.chosen_move, "right");
+    assert!(parsed_body.shout.contains("right"));
+    assert!(parsed_body.shout.contains("left"));
+    assert!(!parsed_body.shout.contains("up"));
+    assert!(!parsed_body.shout.contains("down"));
+}
+
+#[test]
+fn movement_avoid_small_spaces_prefer_potential_head_collision_to_self_trap() {
+    let client = Client::untracked(rocket()).expect("Failed to create client instance");
+    let response = client
+        .post(MOVE_URI)
+        .header(ContentType::JSON)
+        .body(
+            r#"{
+              "game": {
+                "id": "unique-game-id",
+                "ruleset": {
+                  "name": "standard"
+                },
+                "timeout": 500
+              },
+              "turn": 54,
+              "board": {
+                "height": 11,
+                "width": 11,
+                "food": [
+                  { "x": 3, "y": 1 },
+                  { "x": 1, "y": 7 }
+                ],
+                "hazards": [],
+                "snakes": [
+                  {
+                    "id": "my-snake",
+                    "name": "My Snake",
+                    "health": 98,
+                    "body": [
+                      { "x": 8, "y": 10 },
+                      { "x": 8, "y": 9 },
+                      { "x": 8, "y": 8 },
+                      { "x": 9, "y": 8 },
+                      { "x": 10, "y": 8 },
+                      { "x": 10, "y": 7 },
+                      { "x": 10, "y": 6 },
+                      { "x": 10, "y": 5 },
+                      { "x": 10, "y": 4 }
+                    ],
+                    "latency": "111",
+                    "head": {"x": 8, "y": 10},
+                    "length": 9
+                  },
+                  {
+                    "id": "snake-2",
+                    "name": "Snake 2",
+                    "health": 73,
+                    "body": [
+                      { "x": 7, "y": 9 },
+                      { "x": 7, "y": 8 },
+                      { "x": 7, "y": 7 },
+                      { "x": 7, "y": 6 },
+                      { "x": 7, "y": 5 },
+                      { "x": 7, "y": 4 },
+                      { "x": 6, "y": 4 },
+                      { "x": 5, "y": 4 },
+                      { "x": 5, "y": 3 }
+                    ],
+                    "latency": "111",
+                    "head": {"x": 7, "y": 9},
+                    "length": 9
+                  }
+                ]
+              },
+              "you": {
+                "id": "my-snake",
+                "name": "My Snake",
+                "health": 98,
+                "body": [
+                  { "x": 8, "y": 10 },
+                  { "x": 8, "y": 9 },
+                  { "x": 8, "y": 8 },
+                  { "x": 9, "y": 8 },
+                  { "x": 10, "y": 8 },
+                  { "x": 10, "y": 7 },
+                  { "x": 10, "y": 6 },
+                  { "x": 10, "y": 5 },
+                  { "x": 10, "y": 4 }
+                ],
+                "latency": "111",
+                "head": {"x": 8, "y": 10},
+                "length": 9
+              }
+            }"#,
+        )
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let parsed_body = response
+        .into_json::<MoveShoutResponse>()
+        .expect("failed to parse response");
+    assert_eq!(parsed_body.chosen_move, "left");
+    assert!(parsed_body.shout.contains("right"));
+    assert!(parsed_body.shout.contains("left"));
+    assert!(!parsed_body.shout.contains("up"));
     assert!(!parsed_body.shout.contains("down"));
 }

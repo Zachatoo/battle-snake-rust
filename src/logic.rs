@@ -167,7 +167,7 @@ pub fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMo
     info!("Check if snake can fit in space");
 
     let my_head = you.head.to_owned();
-    let my_length = you.length as usize;
+    let mut required_space = you.length as usize;
     let snake_coords = get_all_snake_coords(&board.snakes);
 
     let mut frontier = FifoQueue::<LeafNode>::new();
@@ -187,7 +187,7 @@ pub fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMo
             vec![my_head, adjacent_node.coord].into_iter().collect();
 
         loop {
-            if visited_coords.len() >= my_length {
+            if visited_coords.len() >= required_space {
                 frontier.clear();
                 break;
             }
@@ -195,12 +195,12 @@ pub fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMo
                 Some(x) => x,
                 None => {
                     info!(
-                        "movement: {:?}, len: {}, space: {}",
+                        "movement: {:?}, required space: {}, available space: {}",
                         movement,
-                        my_length,
+                        required_space,
                         visited_coords.len()
                     );
-                    if my_length > visited_coords.len() {
+                    if required_space > visited_coords.len() {
                         set.update_score(movement, -70);
                     }
                     break;
@@ -214,14 +214,19 @@ pub fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMo
                     && adjacent_node.coord.x < (board.width as i32)
                     && adjacent_node.coord.y >= 0
                     && adjacent_node.coord.y < (board.height as i32)
-                    && !snake_coords.contains(&adjacent_node.coord)
                     && !visited_coords.contains(&adjacent_node.coord)
                 {
-                    frontier.enqueue(LeafNode {
-                        node: adjacent_node,
-                        parent: current.parent,
-                    });
-                    visited_coords.insert(adjacent_node.coord);
+                    if !snake_coords.contains(&adjacent_node.coord) {
+                        frontier.enqueue(LeafNode {
+                            node: adjacent_node,
+                            parent: current.parent,
+                        });
+                        visited_coords.insert(adjacent_node.coord);
+                    } else if &adjacent_node.coord != &my_head
+                        && you.body.contains(&adjacent_node.coord)
+                    {
+                        required_space -= 1;
+                    }
                 }
             }
         }
