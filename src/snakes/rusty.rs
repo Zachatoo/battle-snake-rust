@@ -22,7 +22,7 @@ pub fn info() -> InfoResponse {
         api_version: "1".to_string(),
         author: "Zachatoo".to_string(),
         color: "#00AA33".to_string(),
-        head: "gamer".to_string(),
+        head: "eel".to_string(),
         tail: "round-bum".to_string(),
     }
 }
