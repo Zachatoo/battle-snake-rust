@@ -238,7 +238,8 @@ pub fn scan_tail(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet
 
     let my_head = you.head.to_owned();
     let my_tail = you.body.last().unwrap();
-    let snake_coords = get_all_snake_coords(&board.snakes);
+    let mut snake_coords = get_all_snake_coords(&board.snakes);
+    snake_coords.remove(my_tail);
 
     let mut tail_movement: Option<Movement> = None;
     let mut frontier = FifoQueue::<LeafNode>::new();
@@ -286,18 +287,12 @@ pub fn scan_tail(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet
         }
     }
 
-    let mut probability = 20;
-    loop {
-        let movement = match tail_movement {
-            Some(x) => x,
-            None => break,
-        };
-        set.update_score(&movement, probability);
-        probability -= 10;
-        if probability == 0 {
-            break;
+    match tail_movement {
+        Some(x) => {
+            set.update_score(&x, 20);
         }
-    }
+        None => {}
+    };
 }
 
 pub fn snake_is_stacked(snake: &Battlesnake) -> bool {

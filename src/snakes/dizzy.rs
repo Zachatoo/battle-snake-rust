@@ -57,7 +57,7 @@ pub fn get_move(game: &Game, turn: &u32, board: &Board, you: &Battlesnake) -> Mo
 static MOVE_URI: &str = "/dizzy/move?x-api-key=valid_api_key";
 
 #[test]
-fn movement_scan_tail_down() {
+fn movement_scan_tail_circle_down() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
         .post(MOVE_URI)
@@ -119,7 +119,7 @@ fn movement_scan_tail_down() {
 }
 
 #[test]
-fn movement_scan_tail_left() {
+fn movement_scan_tail_circle_left() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
         .post(MOVE_URI)
@@ -181,7 +181,7 @@ fn movement_scan_tail_left() {
 }
 
 #[test]
-fn movement_scan_tail_up() {
+fn movement_scan_tail_circle_up() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
         .post(MOVE_URI)
@@ -243,7 +243,7 @@ fn movement_scan_tail_up() {
 }
 
 #[test]
-fn movement_scan_tail_right() {
+fn movement_scan_tail_circle_right() {
     let client = Client::untracked(rocket()).expect("Failed to create client instance");
     let response = client
         .post(MOVE_URI)
@@ -302,4 +302,68 @@ fn movement_scan_tail_right() {
         .into_json::<MoveShoutResponse>()
         .expect("failed to parse response");
     assert_eq!(parsed_body.chosen_move, "right");
+}
+
+#[test]
+fn movement_scan_tail_l_up() {
+    let client = Client::untracked(rocket()).expect("Failed to create client instance");
+    let response = client
+        .post(MOVE_URI)
+        .header(ContentType::JSON)
+        .body(
+            r#"{
+              "game": {
+                "id": "unique-game-id",
+                "ruleset": {
+                  "name": "standard"
+                },
+                "timeout": 500
+              },
+              "turn": 10,
+              "board": {
+                "height": 11,
+                "width": 11,
+                "food": [],
+                "hazards": [],
+                "snakes": [
+                  {
+                    "id": "my-snake",
+                    "name": "My Snake",
+                    "health": 80,
+                    "body": [
+                      {"x": 2, "y": 8},
+                      {"x": 1, "y": 8},
+                      {"x": 1, "y": 9}
+                    ],
+                    "latency": "111",
+                    "head": {"x": 2, "y": 8},
+                    "length": 3
+                  }
+                ]
+              },
+              "you": {
+                "id": "my-snake",
+                "name": "My Snake",
+                "health": 80,
+                "body": [
+                  {"x": 2, "y": 8},
+                  {"x": 1, "y": 8},
+                  {"x": 1, "y": 9}
+                ],
+                "latency": "111",
+                "head": {"x": 2, "y": 8},
+                "length": 3
+              }
+            }"#,
+        )
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let parsed_body = response
+        .into_json::<MoveShoutResponse>()
+        .expect("failed to parse response");
+    assert_eq!(parsed_body.chosen_move, "up");
+    assert!(parsed_body.shout.contains("down"));
+    assert!(parsed_body.shout.contains("right"));
+    assert!(parsed_body.shout.contains("up"));
+    assert!(!parsed_body.shout.contains("left"));
 }
