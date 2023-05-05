@@ -233,6 +233,73 @@ pub fn avoid_small_spaces(board: &Board, you: &Battlesnake, set: &mut WeightedMo
     }
 }
 
+pub fn scan_tail(board: &Board, you: &Battlesnake, set: &mut WeightedMovementSet) {
+    info!("Searching for tail");
+
+    let my_head = you.head.to_owned();
+    let my_tail = you.body.last().unwrap();
+    let snake_coords = get_all_snake_coords(&board.snakes);
+
+    let mut tail_movement: Option<Movement> = None;
+    let mut frontier = FifoQueue::<LeafNode>::new();
+    let mut visited_coords: HashSet<_> = vec![my_head].into_iter().collect();
+
+    let adjacent_nodes = get_adjacent_nodes(&my_head);
+    for adjacent_node in adjacent_nodes {
+        if set.moves.contains(&adjacent_node.movement) {
+            frontier.enqueue(LeafNode {
+                node: adjacent_node,
+                parent: adjacent_node,
+            });
+            visited_coords.insert(adjacent_node.coord);
+        }
+    }
+
+    loop {
+        let current = match frontier.dequeue() {
+            Some(x) => x,
+            None => break,
+        };
+        let coord = &current.node.coord;
+
+        if coord == my_tail {
+            info!("Found tail at {} {}", coord.x, coord.y);
+            tail_movement = Some(current.parent.movement);
+            break;
+        }
+
+        let adjacent_nodes = get_adjacent_nodes(coord);
+        for adjacent_node in adjacent_nodes {
+            if adjacent_node.coord.x >= 0
+                && adjacent_node.coord.x < (board.width as i32)
+                && adjacent_node.coord.y >= 0
+                && adjacent_node.coord.y < (board.height as i32)
+                && !snake_coords.contains(&adjacent_node.coord)
+                && !visited_coords.contains(&adjacent_node.coord)
+            {
+                frontier.enqueue(LeafNode {
+                    node: adjacent_node,
+                    parent: current.parent,
+                });
+                visited_coords.insert(adjacent_node.coord);
+            }
+        }
+    }
+
+    let mut probability = 20;
+    loop {
+        let movement = match tail_movement {
+            Some(x) => x,
+            None => break,
+        };
+        set.update_score(&movement, probability);
+        probability -= 10;
+        if probability == 0 {
+            break;
+        }
+    }
+}
+
 pub fn snake_is_stacked(snake: &Battlesnake) -> bool {
     for i in 0..snake.body.len() - 1 {
         for j in i + 1..snake.body.len() {

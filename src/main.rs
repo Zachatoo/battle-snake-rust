@@ -91,6 +91,42 @@ fn handle_end_righty(end_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status
     Status::Ok
 }
 
+#[get("/")]
+fn handle_index_dizzy(_key: auth::ApiKey<'_>) -> Json<Value> {
+    Json(json!(snakes::dizzy::info()))
+}
+
+#[post("/start", format = "json", data = "<start_req>")]
+fn handle_start_dizzy(start_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
+    snakes::dizzy::start(
+        &start_req.game,
+        &start_req.turn,
+        &start_req.board,
+        &start_req.you,
+    );
+
+    Status::Ok
+}
+
+#[post("/move", format = "json", data = "<move_req>")]
+fn handle_move_dizzy(move_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Json<Value> {
+    let response = snakes::dizzy::get_move(
+        &move_req.game,
+        &move_req.turn,
+        &move_req.board,
+        &move_req.you,
+    );
+
+    Json(json!(response))
+}
+
+#[post("/end", format = "json", data = "<end_req>")]
+fn handle_end_dizzy(end_req: Json<GameState>, _key: auth::ApiKey<'_>) -> Status {
+    snakes::dizzy::end(&end_req.game, &end_req.turn, &end_req.board, &end_req.you);
+
+    Status::Ok
+}
+
 #[launch]
 fn rocket() -> _ {
     // Lots of web hosting services expect you to bind to the port specified by the `PORT`
@@ -144,6 +180,15 @@ fn rocket() -> _ {
                 handle_start_righty,
                 handle_move_righty,
                 handle_end_righty
+            ],
+        )
+        .mount(
+            "/dizzy",
+            routes![
+                handle_index_dizzy,
+                handle_start_dizzy,
+                handle_move_dizzy,
+                handle_end_dizzy
             ],
         )
 }
